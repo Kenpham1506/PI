@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Pi Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        #pi-container {
+            font-size: 20px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h1>Scroll Down to Generate Pi</h1>
+    <div id="pi-container">3.</div>
+
+    <script>
+        let digits = "1415926535";
+        let index = 0;
+
+        function appendPiDigits() {
+            let piContainer = document.getElementById("pi-container");
+            if (index < digits.length) {
+                piContainer.innerHTML += digits[index];
+                index++;
+            } else {
+                fetch("https://api.pi.delivery/v1/pi?start=" + index + "&numberOfDigits=10")
+                    .then(response => response.json())
+                    .then(data => {
+                        digits = data.content;
+                        index = 0;
+                        appendPiDigits();
+                    });
+            }
+        }
+
+        window.addEventListener("scroll", () => {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+                appendPiDigits();
+            }
+        });
+    </script>
+</body>
+</html>
