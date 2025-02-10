@@ -21,26 +21,33 @@
 </head>
 <body>
     <h1>Generating Pi...</h1>
-    <div id="pi-container"></div>
+    <div id="pi-container">3.</div>
 
     <script>
-        let piContainer = document.getElementById("pi-container");
-        piContainer.innerHTML = "3.";
-
-        function* piGenerator() {
-            let q = 1n, r = 180n, t = 60n, i = 2n;
+        function* spigotPiGenerator() {
+            let q = 1, r = 0, t = 1, k = 1, n = 3, l = 3;
             while (true) {
-                let y = (q * (27n * i - 12n) + 5n * r) / (5n * t);
-                yield y.toString();
-                let u = 3n * (3n * i + 1n) * (3n * i + 2n);
-                r = 10n * u * (r - y * t);
-                q *= 10n * i * (2n * i - 1n);
-                t *= u;
-                i++;
+                if (4 * q + r - t < n * t) {
+                    yield n;
+                    let nr = 10 * (r - n * t);
+                    n = Math.floor((10 * (3 * q + r)) / t) - 10 * n;
+                    q *= 10;
+                    r = nr;
+                } else {
+                    let nr = (2 * q + r) * l;
+                    let nn = Math.floor((q * (7 * k + 2) + r * l) / (t * l));
+                    q *= k;
+                    t *= l;
+                    l += 2;
+                    k += 1;
+                    n = nn;
+                    r = nr;
+                }
             }
         }
 
-        let generator = piGenerator();
+        let generator = spigotPiGenerator();
+        let piContainer = document.getElementById("pi-container");
 
         function generatePiInfinite() {
             setInterval(() => {
@@ -49,7 +56,7 @@
                     newDigits += generator.next().value;
                 }
                 piContainer.innerHTML += newDigits;
-            }, 500);
+            }, 100);
         }
 
         generatePiInfinite();
