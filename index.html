@@ -13,38 +13,51 @@
         #pi-container {
             font-size: 20px;
             word-wrap: break-word;
+            text-align: justify;
+            max-width: 800px;
+            margin: auto;
         }
     </style>
 </head>
 <body>
     <h1>Scroll Down to Generate Pi</h1>
-    <div id="pi-container">3.</div>
+    <div id="pi-container"></div>
 
     <script>
         let digits = "1415926535";
         let index = 0;
+        let piContainer = document.getElementById("pi-container");
+        piContainer.innerHTML = "3.";
 
-        function appendPiDigits() {
-            let piContainer = document.getElementById("pi-container");
+        function appendPiDigits(count = 50) {
             if (index < digits.length) {
-                piContainer.innerHTML += digits[index];
-                index++;
+                piContainer.innerHTML += digits.slice(index, index + count);
+                index += count;
             } else {
-                fetch("https://api.pi.delivery/v1/pi?start=" + index + "&numberOfDigits=10")
+                fetch("https://api.pi.delivery/v1/pi?start=" + index + "&numberOfDigits=" + count)
                     .then(response => response.json())
                     .then(data => {
                         digits = data.content;
                         index = 0;
-                        appendPiDigits();
+                        appendPiDigits(count);
                     });
+            }
+        }
+
+        function fillScreen() {
+            let lines = Math.ceil(window.innerHeight / 24); 
+            for (let i = 0; i < lines * 4; i++) {
+                appendPiDigits(10);
             }
         }
 
         window.addEventListener("scroll", () => {
             if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
-                appendPiDigits();
+                appendPiDigits(50);
             }
         });
+
+        fillScreen();
     </script>
 </body>
 </html>
