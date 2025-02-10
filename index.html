@@ -24,24 +24,27 @@
     <div id="pi-container"></div>
 
     <script>
-        let digits = "1415926535";
-        let index = 0;
         let piContainer = document.getElementById("pi-container");
         piContainer.innerHTML = "3.";
 
-        function appendPiDigits(count = 50) {
-            if (index < digits.length) {
-                piContainer.innerHTML += digits.slice(index, index + count);
-                index += count;
-            } else {
-                fetch("https://api.pi.delivery/v1/pi?start=" + index + "&numberOfDigits=" + count)
-                    .then(response => response.json())
-                    .then(data => {
-                        digits = data.content;
-                        index = 0;
-                        appendPiDigits(count);
-                    });
+        function calculatePiDigits(n) {
+            let pi = "";
+            let q = 1, r = 180, t = 60, i = 2;
+            while (pi.length < n) {
+                let y = Math.floor((q * (27 * i - 12) + 5 * r) / (5 * t));
+                pi += y;
+                let u = 3 * (3 * i + 1) * (3 * i + 2);
+                r = 10 * u * (r - y * t);
+                q *= 10 * i * (2 * i - 1);
+                t *= u;
+                i++;
             }
+            return pi;
+        }
+
+        function appendPiDigits(count = 50) {
+            let newDigits = calculatePiDigits(count);
+            piContainer.innerHTML += newDigits;
         }
 
         function fillScreen() {
