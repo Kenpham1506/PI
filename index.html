@@ -24,39 +24,44 @@
     <div id="pi-container">3.</div>
 
     <script>
-        function* spigotPiGenerator() {
-            let q = 1, r = 0, t = 1, k = 1, n = 3, l = 3;
+        // Generator function to compute digits of Pi using the Spigot algorithm
+        function* piSpigot() {
+            let q = 1n, r = 0n, t = 1n, k = 1n, n = 3n, l = 3n;
             while (true) {
-                if (4 * q + r - t < n * t) {
-                    yield n;
-                    let nr = 10 * (r - n * t);
-                    n = Math.floor((10 * (3 * q + r)) / t) - 10 * n;
-                    q *= 10;
-                    r = nr;
+                if (4n * q + r - t < n * t) {
+                    // Yield the next digit of Pi
+                    yield n.toString();
+                    let nr = 10n * (r - n * t); // Update remainder
+                    n = ((10n * (3n * q + r)) / t) - (10n * n); // Compute next digit
+                    q *= 10n; // Scale up q
+                    r = nr; // Update r
                 } else {
-                    let nr = (2 * q + r) * l;
-                    let nn = Math.floor((q * (7 * k + 2) + r * l) / (t * l));
-                    q *= k;
-                    t *= l;
-                    l += 2;
-                    k += 1;
-                    n = nn;
-                    r = nr;
+                    // Perform calculations to generate the next valid digit
+                    let nr = (2n * q + r) * l;
+                    let nn = ((q * (7n * k + 2n) + r * l) / (t * l));
+                    q *= k; // Update q
+                    t *= l; // Update t
+                    l += 2n; // Increase l
+                    k += 1n; // Increment k
+                    n = nn; // Assign new n value
+                    r = nr; // Assign new r value
                 }
             }
         }
 
-        let generator = spigotPiGenerator();
+        let generator = piSpigot(); // Create a generator instance
         let piContainer = document.getElementById("pi-container");
 
         function generatePiInfinite() {
             setInterval(() => {
                 let newDigits = "";
-                for (let i = 0; i < 10; i++) {
-                    newDigits += generator.next().value;
+                for (let i = 0; i < 10; i++) { // Generate 10 digits at a time
+                    let result = generator.next();
+                    if (result.done) break; // Stop if generator is finished (shouldn't happen)
+                    newDigits += result.value;
                 }
-                piContainer.innerHTML += newDigits;
-            }, 100);
+                piContainer.innerHTML += newDigits; // Append new digits to the display
+            }, 100); // Update every 100 milliseconds
         }
 
         generatePiInfinite();
