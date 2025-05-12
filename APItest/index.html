@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>PayPal Balance Updater</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background: #f0f4f8;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+			margin: 0;
+		}
+
+		.container {
+			background: white;
+			padding: 2rem;
+			border-radius: 10px;
+			box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+			text-align: center;
+			width: 100%;
+			max-width: 400px;
+		}
+
+		h2 {
+			margin-bottom: 1rem;
+			color: #333;
+		}
+
+		input[type="email"] {
+			padding: 10px;
+			width: 100%;
+			margin-bottom: 1rem;
+			border: 1px solid #ccc;
+			border-radius: 5px;
+			font-size: 1rem;
+		}
+
+		button {
+			padding: 10px 20px;
+			background-color: #0070ba;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 1rem;
+			transition: background-color 0.2s ease;
+		}
+
+		button:hover {
+			background-color: #005c99;
+		}
+
+		#result {
+			margin-top: 1rem;
+			color: #2d8659;
+			font-weight: bold;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h2>Update PayPal Balance</h2>
+		<input type="email" id="email" placeholder="Enter user email" />
+		<button onclick="updateUserBalance()">Update Balance</button>
+		<div id="result"></div>
+	</div>
+
+	<script>
+		async function updateUserBalance() {
+			const email = document.getElementById('email').value.trim();
+			const resultBox = document.getElementById('result');
+			const adminPassword = 'yourAdminPassword'; // must match what you set in Apps Script
+
+			if (!email) {
+				resultBox.textContent = 'Please enter an email.';
+				return;
+			}
+
+			const url = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+			const params = new URLSearchParams({
+				email: email,
+				admin: adminPassword
+			});
+
+			resultBox.textContent = 'Updating...';
+
+			try {
+				const response = await fetch(`${url}?${params.toString()}`, {
+					method: 'GET'
+				});
+				const text = await response.text();
+				resultBox.textContent = text;
+			} catch (error) {
+				console.error('Error:', error);
+				resultBox.textContent = 'An error occurred while contacting the server.';
+			}
+		}
+	</script>
+</body>
+</html>
