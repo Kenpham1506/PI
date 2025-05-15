@@ -40,6 +40,7 @@
 	<div class="container">
 		<h2>Make a Payment</h2>
 		<input type="email" id="email" placeholder="Enter your email" required>
+		<input type="number" id="amount" min="1" step="0.01" placeholder="Enter amount in USD" required>
 		<div id="paypal-button-container"></div>
 		<p class="status" id="statusMsg"></p>
 	</div>
@@ -47,19 +48,26 @@
 	<!-- Load PayPal JS SDK -->
 	<script src="https://www.paypal.com/sdk/js?client-id=AeHUkluv2-noekwQfgXgqrGJPBinCh7usJBvwpSF-tgU6lhGOC8QR6A529A0diaNHS2SIY1A1N_gbq4h&currency=USD"></script>
 	<script>
-		const scriptUrl = 'https://script.google.com/macros/s/AKfycbyjzaZVmASmvt8tr2FgvnLUqesRVG1TyObW_ZDdsNGuN3GmOVmWxPC-ZFZJDzrjVnFJgQ/exec'; // Replace with your Apps Script Web App URL
+		const scriptUrl = 'https://script.google.com/macros/s/AKfycbyjzaZVmASmvt8tr2FgvnLUqesRVG1TyObW_ZDdsNGuN3GmOVmWxPC-ZFZJDzrjVnFJgQ/exec'; // Your Web App URL
 
 		paypal.Buttons({
 			createOrder: function(data, actions) {
 				const email = document.getElementById('email').value.trim();
+				const amount = parseFloat(document.getElementById('amount').value.trim());
+
 				if (!email) {
 					alert('Please enter your email before proceeding.');
 					throw new Error("Email is required");
 				}
+				if (!amount || amount < 1) {
+					alert('Please enter a valid amount (minimum $1).');
+					throw new Error("Invalid amount");
+				}
+
 				return actions.order.create({
 					purchase_units: [{
 						amount: {
-							value: '5.00' // Amount to charge (edit as needed)
+							value: amount.toFixed(2)
 						}
 					}]
 				});
