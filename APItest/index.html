@@ -34,6 +34,11 @@
 			margin-top: 20px;
 			font-weight: bold;
 		}
+		#creditEstimate {
+			margin-top: 10px;
+			font-size: 0.95em;
+			color: #555;
+		}
 	</style>
 </head>
 <body>
@@ -41,6 +46,7 @@
 		<h2>Make a Payment</h2>
 		<input type="email" id="email" placeholder="Enter your email" required>
 		<input type="number" id="amount" min="1" step="0.01" placeholder="Enter amount in USD" required>
+		<p id="creditEstimate"></p>
 		<div id="paypal-button-container"></div>
 		<p class="status" id="statusMsg"></p>
 	</div>
@@ -48,7 +54,26 @@
 	<!-- Load PayPal JS SDK -->
 	<script src="https://www.paypal.com/sdk/js?client-id=AeHUkluv2-noekwQfgXgqrGJPBinCh7usJBvwpSF-tgU6lhGOC8QR6A529A0diaNHS2SIY1A1N_gbq4h&currency=USD"></script>
 	<script>
-		const scriptUrl = 'https://script.google.com/macros/s/AKfycbyjzaZVmASmvt8tr2FgvnLUqesRVG1TyObW_ZDdsNGuN3GmOVmWxPC-ZFZJDzrjVnFJgQ/exec'; // Your Web App URL
+		const scriptUrl = 'https://script.google.com/macros/s/AKfycbyjzaZVmASmvt8tr2FgvnLUqesRVG1TyObW_ZDdsNGuN3GmOVmWxPC-ZFZJDzrjVnFJgQ/exec';
+
+		// Estimate PayPal fee (standard: 3.49% + $0.49 USD for domestic)
+		function estimatedFee(amount) {
+			const percent = 0.0349;
+			const fixed = 0.49;
+			return amount * percent + fixed;
+		}
+
+		document.getElementById('amount').addEventListener('input', () => {
+			const amt = parseFloat(document.getElementById('amount').value.trim());
+			const estimate = document.getElementById('creditEstimate');
+			if (!amt || amt < 1) {
+				estimate.textContent = '';
+				return;
+			}
+			const fee = estimatedFee(amt);
+			const credit = amt - fee;
+			estimate.textContent = `Estimated credit after fees: $${credit.toFixed(2)} (PayPal may deduct ~$${fee.toFixed(2)})`;
+		});
 
 		paypal.Buttons({
 			createOrder: function(data, actions) {
@@ -77,7 +102,6 @@
 				document.getElementById('statusMsg').textContent = 'Processing payment...';
 
 				return actions.order.capture().then(function(details) {
-					// Send orderID and email to Apps Script
 					fetch(scriptUrl, {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
