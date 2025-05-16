@@ -20,7 +20,7 @@
 			max-width: 400px;
 			width: 100%;
 		}
-		input {
+		input, select {
 			width: 100%;
 			padding: 10px;
 			margin: 10px 0;
@@ -45,82 +45,107 @@
 	<div class="container">
 		<h2>Make a Payment</h2>
 		<input type="email" id="email" placeholder="Enter your email" required>
-		<input type="number" id="amount" min="1" step="0.01" placeholder="Enter amount in USD" required>
+		<input type="number" id="amount" min="1" step="0.01" placeholder="Enter amount" required>
+		<select id="currency">
+			<option value="USD" selected>USD</option>
+			<option value="GBP">GBP</option>
+		</select>
 		<p id="creditEstimate"></p>
 		<div id="paypal-button-container"></div>
 		<p class="status" id="statusMsg"></p>
 	</div>
 
-	<!-- Load PayPal JS SDK -->
-	<script src="https://www.paypal.com/sdk/js?client-id=AeHUkluv2-noekwQfgXgqrGJPBinCh7usJBvwpSF-tgU6lhGOC8QR6A529A0diaNHS2SIY1A1N_gbq4h&currency=USD"></script>
 	<script>
+		let currentScript;
 		const scriptUrl = 'https://script.google.com/macros/s/AKfycbyjzaZVmASmvt8tr2FgvnLUqesRVG1TyObW_ZDdsNGuN3GmOVmWxPC-ZFZJDzrjVnFJgQ/exec';
 
-		// Estimate PayPal fee (standard: 3.49% + $0.49 USD for domestic)
-		function estimatedFee(amount) {
-			const percent = 0.0349;
-			const fixed = 0.49;
+		function estimatedFee(amount, currency) {
+			// Can be customized by currency
+			const fixed = currency === 'GBP' ? 0.3 : 0.49;
+			const percent = currency === 'GBP' ? 0.029 : 0.0349;
 			return amount * percent + fixed;
 		}
 
-		document.getElementById('amount').addEventListener('input', () => {
+		function updateEstimate() {
 			const amt = parseFloat(document.getElementById('amount').value.trim());
+			const currency = document.getElementById('currency').value;
 			const estimate = document.getElementById('creditEstimate');
 			if (!amt || amt < 1) {
 				estimate.textContent = '';
 				return;
 			}
-			const fee = estimatedFee(amt);
+			const fee = estimatedFee(amt, currency);
 			const credit = amt - fee;
-			estimate.textContent = `Estimated credit after fees: $${credit.toFixed(2)} (PayPal may deduct ~$${fee.toFixed(2)})`;
+			estimate.textContent = `Estimated ${currency}Gem after fees: ${credit.toFixed(2)} (${currency} ~-${fee.toFixed(2)} fee)`;
+		}
+
+		document.getElementById('amount').addEventListener('input', updateEstimate);
+		document.getElementById('currency').addEventListener('change', () => {
+			loadPayPal(document.getElementById('currency').value);
+			updateEstimate();
 		});
 
-		paypal.Buttons({
-			createOrder: function(data, actions) {
-				const email = document.getElementById('email').value.trim();
-				const amount = parseFloat(document.getElementById('amount').value.trim());
+		function loadPayPal(currency) {
+			// Remove previous script
+			if (currentScript) currentScript.remove();
 
-				if (!email) {
-					alert('Please enter your email before proceeding.');
-					throw new Error("Email is required");
-				}
-				if (!amount || amount < 1) {
-					alert('Please enter a valid amount (minimum $1).');
-					throw new Error("Invalid amount");
-				}
+			document.getElementById('paypal-button-container').innerHTML = '';
+			const script = document.createElement('script');
+			script.src = `https://www.paypal.com/sdk/js?client-id=AeHUkluv2-noekwQfgXgqrGJPBinCh7usJBvwpSF-tgU6lhGOC8QR6A529A0diaNHS2SIY1A1N_gbq4h&currency=${currency}`;
+			script.onload = () => {
+				paypal.Buttons({
+					createOrder: function(data, actions) {
+						const email = document.getElementById('email').value.trim();
+						const amount = parseFloat(document.getElementById('amount').value.trim());
 
-				return actions.order.create({
-					purchase_units: [{
-						amount: {
-							value: amount.toFixed(2)
+						if (!email) {
+							alert('Please enter your email.');
+							throw new Error("Email is required");
 						}
-					}]
-				});
-			},
-			onApprove: function(data, actions) {
-				const email = document.getElementById('email').value.trim();
-				document.getElementById('statusMsg').textContent = 'Processing payment...';
+						if (!amount || amount < 1) {
+							alert('Enter a valid amount (min 1).');
+							throw new Error("Invalid amount");
+						}
 
-				return actions.order.capture().then(function(details) {
-					fetch(scriptUrl, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-						body: new URLSearchParams({
-							action: 'capturePayment',
-							email: email,
-							orderID: data.orderID
-						})
-					})
-					.then(res => res.text())
-					.then(response => {
-						document.getElementById('statusMsg').textContent = response;
-					})
-					.catch(err => {
-						document.getElementById('statusMsg').textContent = 'Error: ' + err.message;
-					});
-				});
-			}
-		}).render('#paypal-button-container');
+						return actions.order.create({
+							purchase_units: [{
+								amount: {
+									value: amount.toFixed(2)
+								}
+							}]
+						});
+					},
+					onApprove: function(data, actions) {
+						const email = document.getElementById('email').value.trim();
+						document.getElementById('statusMsg').textContent = 'Processing payment...';
+
+						return actions.order.capture().then(function(details) {
+							fetch(scriptUrl, {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+								body: new URLSearchParams({
+									action: 'capturePayment',
+									email: email,
+									orderID: data.orderID
+								})
+							})
+							.then(res => res.text())
+							.then(response => {
+								document.getElementById('statusMsg').textContent = response;
+							})
+							.catch(err => {
+								document.getElementById('statusMsg').textContent = 'Error: ' + err.message;
+							});
+						});
+					}
+				}).render('#paypal-button-container');
+			};
+			document.body.appendChild(script);
+			currentScript = script;
+		}
+
+		// Initial load
+		loadPayPal(document.getElementById('currency').value);
 	</script>
 </body>
 </html>
